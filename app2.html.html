@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Loto Radar</title>
+<style>
+  :root{
+    --bg: #0E1526;
+    --panel: #161F38;
+    --panel-2: #1C2748;
+    --line: #2A3559;
+    --gold: #D9A544;
+    --gold-dim: #7A6230;
+    --teal: #2E9E8F;
+    --coral: #C1573F;
+    --ink: #EDE9DC;
+    --ink-2: #A2A8C0;
+    --ink-3: #6B7191;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 0 0 3rem 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap{ max-width: 560px; margin: 0 auto; padding: 1.5rem 1.1rem; }
+
+  header{ text-align:center; padding: 1.2rem 0 1.6rem; }
+  header .eyebrow{
+    font-family: Georgia, "Iowan Old Style", serif;
+    letter-spacing: .18em; text-transform: uppercase;
+    font-size: 11px; color: var(--gold); margin: 0 0 .3rem;
+  }
+  header h1{
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-weight: 700; font-size: 30px; margin: 0; letter-spacing: .01em;
+  }
+  header p{ color: var(--ink-2); font-size: 13px; margin: .5rem 0 0; }
+
+  section{ margin-bottom: 1.8rem; }
+  .section-title{
+    font-size: 12px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--ink-3); margin: 0 0 .7rem; font-weight: 600;
+  }
+
+  /* ball wall */
+  .wall{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.1rem;
+  }
+  .grid45{
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 7px;
+  }
+  .ball{
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-weight: 700; font-size: 13px;
+    border: 1px solid var(--line);
+    color: var(--ink-3);
+    background: var(--panel-2);
+    position: relative;
+  }
+  .wall-legend{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top: .9rem; font-size: 11px; color: var(--ink-3);
+  }
+  .legend-bar{
+    flex:1; height: 6px; margin: 0 .6rem; border-radius: 3px;
+    background: linear-gradient(90deg, #1C2748, var(--gold-dim), var(--gold));
+  }
+
+  /* form */
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.1rem;
+  }
+  .num-row{ display:flex; gap: 8px; flex-wrap: wrap; margin-bottom: .8rem; }
+  .num-input{
+    width: 46px; height: 46px; text-align:center;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+    color: var(--ink); font-size: 16px; font-family: "SFMono-Regular", Consolas, monospace;
+    font-weight: 700;
+  }
+  .num-input:focus{ outline: none; border-color: var(--gold); }
+  input[type="date"]{
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+    color: var(--ink); padding: .55rem .7rem; font-size: 14px; width: 100%;
+    margin-bottom: .8rem; font-family: inherit;
+  }
+  .btn{
+    width:100%; padding: .8rem; border-radius: 10px; border: 1px solid var(--gold-dim);
+    background: transparent; color: var(--gold); font-size: 14px; font-weight: 700;
+    letter-spacing: .02em; cursor: pointer;
+  }
+  .btn:active{ transform: scale(.98); }
+  .btn.solid{ background: var(--gold); color: #221A08; border-color: var(--gold); }
+  .btn.ghost{ border-color: var(--line); color: var(--ink-2); }
+  .error{ color: var(--coral); font-size: 12.5px; margin: -.3rem 0 .8rem; display:none; }
+
+  /* collapsible */
+  .collapse-toggle{
+    width: 100%; display:flex; align-items:center; justify-content:space-between;
+    background: none; border: none; padding: 0 0 .7rem; cursor: pointer;
+    color: var(--ink); text-align:left;
+  }
+  .collapse-toggle #historyCountBadge{
+    color: var(--gold); font-weight: 400; text-transform: none; letter-spacing: 0;
+    font-size: 12px; margin-left: 4px;
+  }
+  .chevron{
+    color: var(--ink-3); font-size: 14px; transition: transform .2s ease;
+  }
+  .chevron.open{ transform: rotate(180deg); }
+  .collapse-body{
+    max-height: 0; overflow: hidden; transition: max-height .25s ease;
+  }
+  .collapse-body.open{ max-height: 700px; }
+
+  /* history */
+  .history-list{ display:flex; flex-direction:column; gap: 6px; max-height: 260px; overflow-y:auto; }
+  .history-item{
+    display:flex; align-items:center; justify-content:space-between;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: .55rem .8rem; font-size: 13px;
+  }
+  .history-item .date{ color: var(--ink-3); font-size: 11.5px; min-width: 62px; }
+  .history-item .nums{ display:flex; gap: 5px; font-family: "SFMono-Regular", Consolas, monospace; font-weight:700; }
+  .history-item .nums span{ color: var(--gold); }
+  .history-item button{
+    background:none; border:none; color: var(--ink-3); font-size: 16px; cursor:pointer; padding: 0 .2rem;
+  }
+  .empty{ color: var(--ink-3); font-size: 13px; text-align:center; padding: 1.2rem 0; }
+
+  /* suggestion */
+  .suggest-balls{ display:flex; justify-content:center; gap: 8px; margin: .9rem 0 1rem; flex-wrap:wrap; }
+  .suggest-ball{
+    width: 48px; height: 48px; border-radius: 50%; background: var(--gold);
+    color: #221A08; display:flex; align-items:center; justify-content:center;
+    font-family: "SFMono-Regular", Consolas, monospace; font-weight: 700; font-size: 17px;
+  }
+  .suggest-ball.cold{ background: var(--teal); }
+  .toggle-row{ display:flex; gap: 8px; margin-bottom: .9rem; }
+  .toggle-row button{
+    flex:1; padding: .5rem; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--ink-2); font-size: 12.5px; cursor:pointer;
+  }
+  .toggle-row button.active{ border-color: var(--gold); color: var(--gold); }
+  .stat-row{ display:flex; justify-content:space-between; font-size: 11.5px; color: var(--ink-3); margin-top: .3rem; }
+
+  .status{ text-align:center; font-size: 12px; color: var(--ink-3); padding: .5rem 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Suivi de tirages</p>
+    <h1>Loto Radar</h1>
+    <p>Enregistre tes tirages quotidiens, repère les numéros qui reviennent, et sors une combinaison à jouer.</p>
+  </header>
+
+  <section>
+    <p class="section-title">Le mur (1 – 45)</p>
+    <div class="wall">
+      <div class="grid45" id="ballWall"></div>
+      <div class="wall-legend">
+        <span>rare</span>
+        <div class="legend-bar"></div>
+        <span>fréquent</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="section-title">Ajouter un tirage</p>
+    <div class="card">
+      <input type="date" id="drawDate">
+      <div class="num-row" id="numRow"></div>
+      <p class="error" id="formError">Entrer 6 numéros différents entre 1 et 45.</p>
+      <button class="btn solid" id="addDrawBtn">Ajouter le tirage</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <button class="collapse-toggle" id="historyToggle">
+        <span class="section-title" style="margin:0;">Historique <span id="historyCountBadge"></span></span>
+        <span class="chevron" id="historyChevron">▾</span>
+      </button>
+      <div class="collapse-body" id="historyBody">
+        <div class="history-list" id="historyList"></div>
+        <p class="empty" id="historyEmpty" style="display:none;">Aucun tirage enregistré pour l'instant.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="section-title">Suggestion</p>
+    <div class="card">
+      <div class="toggle-row">
+        <button data-mode="hot" class="active">Numéros chauds</button>
+        <button data-mode="cold">Numéros froids</button>
+        <button data-mode="mix">Pondéré</button>
+      </div>
+      <div class="suggest-balls" id="suggestBalls"></div>
+      <button class="btn ghost" id="regenBtn">Régénérer</button>
+      <div class="stat-row">
+        <span id="drawCount">0 tirage enregistré</span>
+        <span id="modeExplain">basé sur les fréquences les plus hautes</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <button class="collapse-toggle" id="backupToggle">
+        <span class="section-title" style="margin:0;">Sauvegarde / Transfert</span>
+        <span class="chevron" id="backupChevron">▾</span>
+      </button>
+      <div class="collapse-body" id="backupBody">
+        <p style="font-size:12.5px; color:var(--ink-2); margin:0 0 .7rem;">Pour transférer tes données vers une autre version de l'appli : exporte ici, copie le texte, puis colle-le dans la case "Importer" de l'autre version.</p>
+        <button class="btn ghost" id="exportBtn" style="margin-bottom:.7rem;">Exporter mes données</button>
+        <textarea id="exportBox" readonly style="width:100%; min-height:70px; display:none; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; color:var(--ink); font-family:'SFMono-Regular',Consolas,monospace; font-size:11px; padding:.6rem; margin-bottom:.9rem;"></textarea>
+        <textarea id="importBox" placeholder="Colle ici le texte exporté depuis l'autre version…" style="width:100%; min-height:70px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; color:var(--ink); font-family:'SFMono-Regular',Consolas,monospace; font-size:11px; padding:.6rem; margin-bottom:.7rem;"></textarea>
+        <button class="btn solid" id="importBtn">Importer ces données</button>
+        <p class="status" id="backupStatus" style="padding-top:.6rem;"></p>
+      </div>
+    </div>
+  </section>
+
+  <p class="status" id="status"></p>
+</div>
+
+<script>
+const STORAGE_KEY = 'draws';
+let draws = [];
+let suggestMode = 'hot';
+
+const ballWall = document.getElementById('ballWall');
+const numRow = document.getElementById('numRow');
+const historyList = document.getElementById('historyList');
+const historyEmpty = document.getElementById('historyEmpty');
+const formError = document.getElementById('formError');
+const statusEl = document.getElementById('status');
+const suggestBalls = document.getElementById('suggestBalls');
+const drawCountEl = document.getElementById('drawCount');
+const modeExplainEl = document.getElementById('modeExplain');
+
+document.getElementById('drawDate').valueAsDate = new Date();
+
+for(let i=0;i<6;i++){
+  const inp = document.createElement('input');
+  inp.type = 'number'; inp.min = 1; inp.max = 45;
+  inp.className = 'num-input';
+  inp.placeholder = '–';
+  inp.addEventListener('input', () => {
+    let v = inp.value.replace(/[^0-9]/g, '');
+    if(v.length > 1 && v.startsWith('0')) v = v.replace(/^0+/, '');
+    if(v !== ''){
+      let n = parseInt(v, 10);
+      if(n > 45) v = '45';
+      else if(n < 0) v = '';
+    }
+    inp.value = v;
+  });
+  numRow.appendChild(inp);
+}
+
+function frequencies(){
+  const freq = new Array(46).fill(0);
+  draws.forEach(d => d.numbers.forEach(n => { if(n>=1 && n<=45) freq[n]++; }));
+  return freq;
+}
+
+function renderWall(){
+  ballWall.innerHTML = '';
+  const freq = frequencies();
+  const max = Math.max(1, ...freq.slice(1));
+  for(let n=1; n<=45; n++){
+    const div = document.createElement('div');
+    div.className = 'ball';
+    const ratio = freq[n] / max;
+    if(freq[n] === 0){
+      div.style.background = 'var(--panel-2)';
+      div.style.color = 'var(--ink-3)';
+    } else {
+      const alpha = 0.25 + ratio*0.75;
+      div.style.background = `color-mix(in srgb, var(--gold) ${Math.round(alpha*100)}%, var(--panel-2))`;
+      div.style.color = ratio > 0.4 ? '#221A08' : 'var(--ink)';
+      div.style.borderColor = 'var(--gold-dim)';
+    }
+    div.textContent = n;
+    ballWall.appendChild(div);
+  }
+}
+
+function formatDate(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}-${m}-${y}`;
+}
+
+function renderHistory(){
+  historyList.innerHTML = '';
+  const badge = document.getElementById('historyCountBadge');
+  badge.textContent = draws.length > 0 ? `(${draws.length})` : '';
+  if(draws.length === 0){
+    historyEmpty.style.display = 'block';
+    return;
+  }
+  historyEmpty.style.display = 'none';
+  const sorted = [...draws].sort((a,b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
+  sorted.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    const nums = d.numbers.map(n => `<span>${n}</span>`).join(' ');
+    row.innerHTML = `
+      <span class="date">${formatDate(d.date)}</span>
+      <span class="nums">${nums}</span>
+      <button aria-label="Supprimer" data-id="${d.id}">✕</button>
+    `;
+    historyList.appendChild(row);
+  });
+  historyList.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => deleteDraw(btn.dataset.id));
+  });
+}
+
+function renderSuggestion(){
+  const freq = frequencies();
+  const ranked = [];
+  for(let n=1;n<=45;n++) ranked.push({n, f: freq[n]});
+
+  let picked = [];
+  if(suggestMode === 'hot'){
+    picked = [...ranked].sort((a,b)=> b.f - a.f || Math.random()-0.5).slice(0,6).map(x=>x.n);
+    modeExplainEl.textContent = 'les 6 numéros les plus sortis';
+  } else if(suggestMode === 'cold'){
+    picked = [...ranked].sort((a,b)=> a.f - b.f || Math.random()-0.5).slice(0,6).map(x=>x.n);
+    modeExplainEl.textContent = 'les 6 numéros les moins sortis (en retard)';
+  } else {
+    const weighted = [];
+    ranked.forEach(x => { for(let i=0;i<x.f+1;i++) weighted.push(x.n); });
+    const set = new Set();
+    let guard = 0;
+    while(set.size < 6 && guard < 2000){
+      guard++;
+      const pick = weighted[Math.floor(Math.random()*weighted.length)];
+      set.add(pick);
+    }
+    picked = [...set];
+    modeExplainEl.textContent = 'tirage aléatoire pondéré par la fréquence';
+  }
+
+  picked.sort((a,b)=>a-b);
+  suggestBalls.innerHTML = '';
+  picked.forEach(n => {
+    const b = document.createElement('div');
+    b.className = 'suggest-ball' + (suggestMode === 'cold' ? ' cold' : '');
+    b.textContent = n;
+    suggestBalls.appendChild(b);
+  });
+
+  drawCountEl.textContent = `${draws.length} tirage${draws.length>1?'s':''} enregistré${draws.length>1?'s':''}`;
+}
+
+document.querySelectorAll('.toggle-row button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-row button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    suggestMode = btn.dataset.mode;
+    renderSuggestion();
+  });
+});
+document.getElementById('regenBtn').addEventListener('click', renderSuggestion);
+
+document.getElementById('historyToggle').addEventListener('click', () => {
+  document.getElementById('historyBody').classList.toggle('open');
+  document.getElementById('historyChevron').classList.toggle('open');
+});
+
+document.getElementById('backupToggle').addEventListener('click', () => {
+  document.getElementById('backupBody').classList.toggle('open');
+  document.getElementById('backupChevron').classList.toggle('open');
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const box = document.getElementById('exportBox');
+  box.value = JSON.stringify(draws);
+  box.style.display = 'block';
+  box.focus();
+  box.select();
+  document.getElementById('backupStatus').textContent = draws.length > 0
+    ? `${draws.length} tirage(s) prêts à copier — sélectionne le texte ci-dessus et copie-le.`
+    : "Aucune donnée à exporter.";
+});
+
+document.getElementById('importBtn').addEventListener('click', async () => {
+  const raw = document.getElementById('importBox').value.trim();
+  const statusBox = document.getElementById('backupStatus');
+  if(!raw){ statusBox.textContent = "Colle d'abord le texte exporté."; return; }
+  try{
+    const imported = JSON.parse(raw);
+    if(!Array.isArray(imported)) throw new Error('format invalide');
+    const existingIds = new Set(draws.map(d => d.id));
+    let added = 0;
+    imported.forEach(d => {
+      if(d && d.date && Array.isArray(d.numbers) && !existingIds.has(d.id)){
+        draws.push(d);
+        existingIds.add(d.id);
+        added++;
+      }
+    });
+    await saveDraws();
+    renderWall(); renderHistory(); renderSuggestion();
+    statusBox.textContent = `${added} tirage(s) importé(s) avec succès.`;
+    document.getElementById('importBox').value = '';
+  } catch(e){
+    statusBox.textContent = "Le texte collé n'est pas valide.";
+  }
+});
+
+async function saveDraws(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draws));
+    statusEl.textContent = '';
+  } catch(e){
+    statusEl.textContent = "Erreur d'enregistrement.";
+  }
+}
+
+async function loadDraws(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    draws = raw ? JSON.parse(raw) : [];
+  } catch(e){
+    draws = [];
+  }
+  statusEl.textContent = '';
+  renderWall();
+  renderHistory();
+  renderSuggestion();
+}
+
+document.getElementById('addDrawBtn').addEventListener('click', async () => {
+  const date = document.getElementById('drawDate').value;
+  const inputs = [...numRow.querySelectorAll('.num-input')];
+  const numbers = inputs.map(i => parseInt(i.value, 10));
+
+  const valid = numbers.every(n => Number.isInteger(n) && n>=1 && n<=45) &&
+                new Set(numbers).size === 6 && date;
+
+  if(!valid){
+    formError.style.display = 'block';
+    return;
+  }
+  formError.style.display = 'none';
+
+  draws.push({ id: Date.now().toString(36), date, numbers });
+  await saveDraws();
+  inputs.forEach(i => i.value = '');
+  renderWall();
+  renderHistory();
+  renderSuggestion();
+});
+
+async function deleteDraw(id){
+  draws = draws.filter(d => d.id !== id);
+  await saveDraws();
+  renderWall();
+  renderHistory();
+  renderSuggestion();
+}
+
+loadDraws();
+</script>
+</body>
+</html>
