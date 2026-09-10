@@ -320,7 +320,7 @@ function renderHistory(){
     return;
   }
   historyEmpty.style.display = 'none';
-  const sorted = [...draws].sort((a,b) => b.date.localeCompare(a.date));
+  const sorted = [...draws].sort((a,b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
   sorted.forEach(d => {
     const row = document.createElement('div');
     row.className = 'history-item';
